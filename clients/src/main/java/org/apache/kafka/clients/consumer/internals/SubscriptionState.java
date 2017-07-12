@@ -324,7 +324,7 @@ public class SubscriptionState {
         if (isolationLevel == IsolationLevel.READ_COMMITTED)
             return topicPartitionState.lastStableOffset == null ? null : topicPartitionState.lastStableOffset - topicPartitionState.position;
         else
-            return topicPartitionState.highWatermark == null ? null : topicPartitionState.highWatermark - topicPartitionState.position;
+            return topicPartitionState.highWatermark == null || topicPartitionState.committed == null ? null : topicPartitionState.highWatermark - topicPartitionState.committed.offset();
     }
 
     public void updateHighWatermark(TopicPartition tp, long highWatermark) {

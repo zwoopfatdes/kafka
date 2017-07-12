@@ -1138,6 +1138,8 @@ public class FetcherTest {
     @Test
     public void testFetcherMetrics() {
         subscriptions.assignFromUser(singleton(tp1));
+        // assume we have 1 committed offset
+        subscriptions.committed(tp1, new OffsetAndMetadata(1));
         subscriptions.seek(tp1, 0);
 
         MetricName maxLagMetric = metrics.metricInstance(metricsRegistry.recordsLagMax);
@@ -1151,10 +1153,10 @@ public class FetcherTest {
 
         // recordsFetchLagMax should be hw - fetchOffset after receiving an empty FetchResponse
         fetchRecords(tp1, MemoryRecords.EMPTY, Errors.NONE, 100L, 0);
-        assertEquals(100, recordsFetchLagMax.value(), EPSILON);
+        assertEquals(99, recordsFetchLagMax.value(), EPSILON);
 
         KafkaMetric partitionLag = allMetrics.get(partitionLagMetric);
-        assertEquals(100, partitionLag.value(), EPSILON);
+        assertEquals(99, partitionLag.value(), EPSILON);
 
         // recordsFetchLagMax should be hw - offset of the last message after receiving a non-empty FetchResponse
         MemoryRecordsBuilder builder = MemoryRecords.builder(ByteBuffer.allocate(1024), CompressionType.NONE,
@@ -1162,8 +1164,8 @@ public class FetcherTest {
         for (int v = 0; v < 3; v++)
             builder.appendWithOffset(v, RecordBatch.NO_TIMESTAMP, "key".getBytes(), ("value-" + v).getBytes());
         fetchRecords(tp1, builder.build(), Errors.NONE, 200L, 0);
-        assertEquals(197, recordsFetchLagMax.value(), EPSILON);
-        assertEquals(197, partitionLag.value(), EPSILON);
+        assertEquals(199, recordsFetchLagMax.value(), EPSILON);
+        assertEquals(199, partitionLag.value(), EPSILON);
 
         // verify de-registration of partition lag
         subscriptions.unsubscribe();
